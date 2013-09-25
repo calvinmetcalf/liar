@@ -1,0 +1,22 @@
+{
+  "name": "liar",
+  "version": "0.0.1",
+  "homepage": "https://github.com/calvinmetcalf/liar",
+  "authors": [
+    "Calvin Metcalf <calvin.metcalf@state.ma.us>"
+  ],
+  "description": "a toolbelt of deceit",
+  "main": "dist/liar.js",
+  "keywords": [
+    "promise",
+    "async"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
