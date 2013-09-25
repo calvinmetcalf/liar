@@ -1,0 +1,17 @@
+{
+  "name": "liar",
+  "repo": "calvinmetcalf/liar",
+  "description": "a toolbelt of deceit",
+  "version": "0.0.1",
+  "keywords": [],
+  "dependencies": {
+    "calvinmetcalf/lie": "2.0.1"
+  },
+  "development": {},
+  "license": "MIT",
+  "main": "lib/index.js",
+  "scripts": [
+    "lib/index.js"
+  ],
+  "remotes": []
+}
