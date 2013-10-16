@@ -1,206 +1,229 @@
-;(function(){
+!function(e){"object"==typeof exports?module.exports=e():"function"==typeof define&&define.amd?define(e):"undefined"!=typeof window?window.liar=e():"undefined"!=typeof global?global.liar=e():"undefined"!=typeof self&&(self.liar=e())}(function(){var define,module,exports;
+return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var promise = require('lie');
+promise.all = function(array) {
+    return promise(function(fulfill,reject){
+        var len = array.length;
+        var fulfilled = 0;
+        var out = [];
+        var onSuccess = function(n) {
+            return function(v) {
+                out[n] = v;
+                if (++fulfilled === len) {
+                    fulfill(out);
+                }
+            };
+        };
+        array.forEach(function(v, i) {
+            v.then(onSuccess(i), function(a) {
+                reject(a);
+            });
+        });
+    });
+};
+promise.some = function(array) {
+    return promise(function(fulfill,reject){
+        var len = array.length;
+        var rejected = 0;
+        var out = [];
+        function onFailure(n) {
+            return function(v) {
+                out[n] = v;
+                if (++rejected === len) {
+                    reject(out);
+                }
+            };
+        }
+        array.forEach(function(v, i) {
+            v.then(function(a) {
+                fulfill(a);
+            },onFailure(i));
+        });
+    });
+};
+promise.map = function(array,func){
+    return promise.all(array.map(func));
+};
+module.exports = promise;
+},{"lie":3}],2:[function(require,module,exports){
+// shim for using process in browser
 
-/**
- * Require the given path.
- *
- * @param {String} path
- * @return {Object} exports
- * @api public
- */
+var process = module.exports = {};
 
-function require(path, parent, orig) {
-  var resolved = require.resolve(path);
+process.nextTick = (function () {
+    var canSetImmediate = typeof window !== 'undefined'
+    && window.setImmediate;
+    var canPost = typeof window !== 'undefined'
+    && window.postMessage && window.addEventListener
+    ;
 
-  // lookup failed
-  if (null == resolved) {
-    orig = orig || path;
-    parent = parent || 'root';
-    var err = new Error('Failed to require "' + orig + '" from "' + parent + '"');
-    err.path = orig;
-    err.parent = parent;
-    err.require = true;
-    throw err;
-  }
+    if (canSetImmediate) {
+        return function (f) { return window.setImmediate(f) };
+    }
 
-  var module = require.modules[resolved];
+    if (canPost) {
+        var queue = [];
+        window.addEventListener('message', function (ev) {
+            if (ev.source === window && ev.data === 'process-tick') {
+                ev.stopPropagation();
+                if (queue.length > 0) {
+                    var fn = queue.shift();
+                    fn();
+                }
+            }
+        }, true);
 
-  // perform real require()
-  // by invoking the module's
-  // registered function
-  if (!module.exports) {
-    module.exports = {};
-    module.client = module.component = true;
-    module.call(this, module.exports, require.relative(resolved), module);
-  }
+        return function nextTick(fn) {
+            queue.push(fn);
+            window.postMessage('process-tick', '*');
+        };
+    }
 
-  return module.exports;
+    return function nextTick(fn) {
+        setTimeout(fn, 0);
+    };
+})();
+
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
 }
 
-/**
- * Registered modules.
- */
-
-require.modules = {};
-
-/**
- * Registered aliases.
- */
-
-require.aliases = {};
-
-/**
- * Resolve `path`.
- *
- * Lookup:
- *
- *   - PATH/index.js
- *   - PATH.js
- *   - PATH
- *
- * @param {String} path
- * @return {String} path or null
- * @api private
- */
-
-require.resolve = function(path) {
-  if (path.charAt(0) === '/') path = path.slice(1);
-
-  var paths = [
-    path,
-    path + '.js',
-    path + '.json',
-    path + '/index.js',
-    path + '/index.json'
-  ];
-
-  for (var i = 0; i < paths.length; i++) {
-    var path = paths[i];
-    if (require.modules.hasOwnProperty(path)) return path;
-    if (require.aliases.hasOwnProperty(path)) return require.aliases[path];
-  }
+// TODO(shtylman)
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
 };
 
-/**
- * Normalize `path` relative to the current path.
- *
- * @param {String} curr
- * @param {String} path
- * @return {String}
- * @api private
- */
-
-require.normalize = function(curr, path) {
-  var segs = [];
-
-  if ('.' != path.charAt(0)) return path;
-
-  curr = curr.split('/');
-  path = path.split('/');
-
-  for (var i = 0; i < path.length; ++i) {
-    if ('..' == path[i]) {
-      curr.pop();
-    } else if ('.' != path[i] && '' != path[i]) {
-      segs.push(path[i]);
+},{}],3:[function(require,module,exports){
+var immediate = require('immediate');
+// Creates a deferred: an object with a promise and corresponding resolve/reject methods
+function Promise(resolver) {
+     if (!(this instanceof Promise)) {
+        return new Promise(resolver);
     }
-  }
-
-  return curr.concat(segs).join('/');
-};
-
-/**
- * Register module at `path` with callback `definition`.
- *
- * @param {String} path
- * @param {Function} definition
- * @api private
- */
-
-require.register = function(path, definition) {
-  require.modules[path] = definition;
-};
-
-/**
- * Alias a module definition.
- *
- * @param {String} from
- * @param {String} to
- * @api private
- */
-
-require.alias = function(from, to) {
-  if (!require.modules.hasOwnProperty(from)) {
-    throw new Error('Failed to alias "' + from + '", it does not exist');
-  }
-  require.aliases[to] = from;
-};
-
-/**
- * Return a require function relative to the `parent` path.
- *
- * @param {String} parent
- * @return {Function}
- * @api private
- */
-
-require.relative = function(parent) {
-  var p = require.normalize(parent, '..');
-
-  /**
-   * lastIndexOf helper.
-   */
-
-  function lastIndexOf(arr, obj) {
-    var i = arr.length;
-    while (i--) {
-      if (arr[i] === obj) return i;
+    var sucessQueue = [];
+    var failureQueue = [];
+    var resolved = false;
+    // The `handler` variable points to the function that will
+    // 1) handle a .then(onFulfilled, onRejected) call
+    // 2) handle a .resolve or .reject call (if not fulfilled)
+    // Before 2), `handler` holds a queue of callbacks.
+    // After 2), `handler` is a simple .then handler.
+    // We use only one function to save memory and complexity.
+     // Case 1) handle a .then(onFulfilled, onRejected) call
+    function pending(onFulfilled, onRejected){
+        return Promise(function(success,failure){
+            if(typeof onFulfilled === 'function'){
+                sucessQueue.push({
+                    resolve: success,
+                    reject: failure,
+                    callback:onFulfilled
+                });
+            }else{
+                sucessQueue.push({
+                    next: success,
+                    callback:false
+                });
+            }
+            if(typeof onRejected === 'function'){
+                failureQueue.push({
+                    resolve: success,
+                    reject: failure,
+                    callback:onRejected
+                });
+            }else{
+                failureQueue.push({
+                    next: failure,
+                    callback:false
+                });
+            }
+        });
     }
-    return -1;
-  }
+    this.then = function(onFulfilled, onRejected) {
+        return resolved?resolved(onFulfilled, onRejected):pending(onFulfilled, onRejected);
+    };
+    // Case 2) handle a .resolve or .reject call
+        // (`onFulfilled` acts as a sentinel)
+        // The actual function signature is
+        // .re[ject|solve](sentinel, success, value)
+    function resolve(success, value){
+        if(resolved){
+            return;
+        }
+        resolved = createHandler(this, value, success?0:1);
+        var queue = success ? sucessQueue : failureQueue;
+        var len = queue.length;
+        var i = -1;
+        while(++i < len) {
+            if (queue[i].callback) {
+                immediate(execute,queue[i].callback, value, queue[i].resolve, queue[i].reject);
+            }else if(!queue[i].next){
+                console.log(queue[i]);
+            }else{
+                queue[i].next(value);
+            }
+        }
+        // Replace this handler with a simple resolved or rejected handler
+    }
+    var fulfill = resolve.bind(this,true);
+    var reject = resolve.bind(this,false);
+    try{
+        resolver(function(a){
+            if(a && typeof a.then==='function'){
+                a.then(fulfill,reject);
+            }else{
+                fulfill(a);
+            }
+        },reject);
+    }catch(e){
+        reject(e);
+    }
+}
 
-  /**
-   * The relative require() itself.
-   */
+// Creates a fulfilled or rejected .then function
+function createHandler(scope, value, success) {
+    return function() {
+        var callback = arguments[success];
+        if (typeof callback !== 'function') {
+            return scope;
+        }
+        return Promise(function(resolve,reject){
+            immediate(execute,callback,value,resolve,reject);
+       });
+    };
+}
 
-  function localRequire(path) {
-    var resolved = localRequire.resolve(path);
-    return require(resolved, parent, path);
-  }
+// Executes the callback with the specified value,
+// resolving or rejecting the deferred
+function execute(callback, value, resolve, reject) {
+        try {
+            var result = callback(value);
+            if (result && typeof result.then === 'function') {
+                result.then(resolve, reject);
+            }
+            else {
+                resolve(result);
+            }
+        }
+        catch (error) {
+            reject(error);
+        }
+}
+module.exports = Promise;
 
-  /**
-   * Resolve relative to the parent.
-   */
-
-  localRequire.resolve = function(path) {
-    var c = path.charAt(0);
-    if ('/' == c) return path.slice(1);
-    if ('.' == c) return require.normalize(p, path);
-
-    // resolve deps by returning
-    // the dep in the nearest "deps"
-    // directory
-    var segs = parent.split('/');
-    var i = lastIndexOf(segs, 'deps') + 1;
-    if (!i) i = 0;
-    path = segs.slice(0, i + 1).join('/') + '/deps/' + path;
-    return path;
-  };
-
-  /**
-   * Check if module is defined at `path`.
-   */
-
-  localRequire.exists = function(path) {
-    return require.modules.hasOwnProperty(localRequire.resolve(path));
-  };
-
-  return localRequire;
-};
-require.register("calvinmetcalf-setImmediate/lib/index.js", function(exports, require, module){
+},{"immediate":5}],4:[function(require,module,exports){
+var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {};module.exports = typeof global === "object" && global ? global : this;
+},{}],5:[function(require,module,exports){
 "use strict";
 var types = [
     require("./nextTick"),
     require("./mutation"),
+    require("./realSetImmediate"),
     require("./postMessage"),
     require("./messageChannel"),
     require("./stateChange"),
@@ -246,9 +269,48 @@ retFunc.clear = function (n) {
 };
 module.exports = retFunc;
 
-});
-require.register("calvinmetcalf-setImmediate/lib/nextTick.js", function(exports, require, module){
+},{"./messageChannel":6,"./mutation":7,"./nextTick":8,"./postMessage":9,"./realSetImmediate":10,"./stateChange":11,"./timeout":12}],6:[function(require,module,exports){
 "use strict";
+var globe = require("./global");
+exports.test = function () {
+    return !!globe.MessageChannel;
+};
+
+exports.install = function (func) {
+    var channel = new globe.MessageChannel();
+    channel.port1.onmessage = func;
+    return function () {
+        channel.port2.postMessage(0);
+    };
+};
+},{"./global":4}],7:[function(require,module,exports){
+"use strict";
+//based off rsvp
+//https://github.com/tildeio/rsvp.js/blob/master/lib/rsvp/async.js
+var globe = require("./global");
+
+var MutationObserver = globe.MutationObserver || globe.WebKitMutationObserver;
+
+exports.test = function () {
+    return MutationObserver;
+};
+
+exports.install = function (handle) {
+    var observer = new MutationObserver(handle);
+    var element = globe.document.createElement("div");
+    observer.observe(element, { attributes: true });
+
+    // Chrome Memory Leak: https://bugs.webkit.org/show_bug.cgi?id=93661
+    globe.addEventListener("unload", function () {
+        observer.disconnect();
+        observer = null;
+    }, false);
+    return function () {
+        element.setAttribute("drainQueue", "drainQueue");
+    };
+};
+},{"./global":4}],8:[function(require,module,exports){
+var process=require("__browserify_process");"use strict";
 exports.test = function () {
     // Don't get fooled by e.g. browserify environments.
     return typeof process === "object" && Object.prototype.toString.call(process) === "[object process]";
@@ -257,8 +319,7 @@ exports.test = function () {
 exports.install = function () {
     return process.nextTick;
 };
-});
-require.register("calvinmetcalf-setImmediate/lib/postMessage.js", function(exports, require, module){
+},{"__browserify_process":2}],9:[function(require,module,exports){
 "use strict";
 var globe = require("./global");
 exports.test = function () {
@@ -296,23 +357,19 @@ exports.install = function (func) {
         globe.postMessage(codeWord, "*");
     };
 };
-});
-require.register("calvinmetcalf-setImmediate/lib/messageChannel.js", function(exports, require, module){
+},{"./global":4}],10:[function(require,module,exports){
 "use strict";
 var globe = require("./global");
 exports.test = function () {
-    return !!globe.MessageChannel;
+    return  globe.setImmediate;
 };
 
-exports.install = function (func) {
-    var channel = new globe.MessageChannel();
-    channel.port1.onmessage = func;
-    return function () {
-        channel.port2.postMessage(0);
-    };
+exports.install = function (handle) {
+    //return globe.setImmediate.bind(globe, handle);
+    return globe.setTimeout.bind(globe,handle,0);
 };
-});
-require.register("calvinmetcalf-setImmediate/lib/stateChange.js", function(exports, require, module){
+
+},{"./global":4}],11:[function(require,module,exports){
 "use strict";
 var globe = require("./global");
 exports.test = function () {
@@ -337,8 +394,7 @@ exports.install = function (handle) {
         return handle;
     };
 };
-});
-require.register("calvinmetcalf-setImmediate/lib/timeout.js", function(exports, require, module){
+},{"./global":4}],12:[function(require,module,exports){
 "use strict";
 exports.test = function () {
     return true;
@@ -349,205 +405,7 @@ exports.install = function (t) {
         setTimeout(t, 0);
     };
 };
+},{}]},{},[1])
+(1)
 });
-require.register("calvinmetcalf-setImmediate/lib/global.js", function(exports, require, module){
-module.exports = typeof global === "object" && global ? global : this;
-});
-require.register("calvinmetcalf-setImmediate/lib/mutation.js", function(exports, require, module){
-"use strict";
-//based off rsvp
-//https://github.com/tildeio/rsvp.js/blob/master/lib/rsvp/async.js
-var globe = require("./global");
-
-var MutationObserver = globe.MutationObserver || globe.WebKitMutationObserver;
-
-exports.test = function () {
-    return MutationObserver;
-};
-
-exports.install = function (handle) {
-    var observer = new MutationObserver(handle);
-    var element = globe.document.createElement("div");
-    observer.observe(element, { attributes: true });
-
-    // Chrome Memory Leak: https://bugs.webkit.org/show_bug.cgi?id=93661
-    globe.addEventListener("unload", function () {
-        observer.disconnect();
-        observer = null;
-    }, false);
-    return function () {
-        element.setAttribute("drainQueue", "drainQueue");
-    };
-};
-});
-require.register("calvinmetcalf-lie/lie.js", function(exports, require, module){
-var immediate = require('immediate');
-// Creates a deferred: an object with a promise and corresponding resolve/reject methods
-function Promise(resolver) {
-     if (!(this instanceof Promise)) {
-        return new Promise(resolver);
-    }
-    // The `handler` variable points to the function that will
-    // 1) handle a .then(onFulfilled, onRejected) call
-    // 2) handle a .resolve or .reject call (if not fulfilled)
-    // Before 2), `handler` holds a queue of callbacks.
-    // After 2), `handler` is a simple .then handler.
-    // We use only one function to save memory and complexity.
-    var handler = function(onFulfilled, onRejected, value) {
-        // Case 1) handle a .then(onFulfilled, onRejected) call
-        if (onFulfilled !== handler) {
-            return Promise(function(resolver,rejecter){
-                handler.queue.push({
-                    resolve: onFulfilled,
-                    reject: onRejected,
-                    resolver:resolver,
-                    rejecter:rejecter
-                });
-            });
-        }
-
-        // Case 2) handle a .resolve or .reject call
-        // (`onFulfilled` acts as a sentinel)
-        // The actual function signature is
-        // .re[ject|solve](sentinel, success, value)
-        var action = onRejected ? 'resolve' : 'reject';
-        var queue;
-        var callback;
-        for (var i = 0, l = handler.queue.length; i < l; i++) {
-            queue = handler.queue[i];
-            callback = queue[action];
-            if (typeof callback === 'function') {
-                execute(callback, value, queue.resolver, queue.rejecter);
-            }else if(onRejected){
-                queue.resolver(value);
-            }else{
-                queue.rejecter(value);
-            }
-        }
-        // Replace this handler with a simple resolved or rejected handler
-        handler = createHandler(then, value, onRejected);
-    };
-    function then(onFulfilled, onRejected) {
-        return handler(onFulfilled, onRejected);
-    }
-    
-    this.then = then;
-    // The queue of deferreds
-    handler.queue = [];
-    resolver(function(value) {
-        if (handler.queue) {
-            handler(handler, true, value);
-        }
-    },function (reason) {
-        if (handler.queue) {
-            handler(handler, false, reason);
-        }
-    });
-}
-
-// Creates a fulfilled or rejected .then function
-function createHandler(then, value, success) {
-    return function(onFulfilled, onRejected) {
-        var callback = success ? onFulfilled : onRejected;
-        if (typeof callback !== 'function') {
-            return {then:then};
-        }
-        return Promise(function(resolve,reject){
-            execute(callback, value, resolve, reject);
-       });
-    };
-}
-
-// Executes the callback with the specified value,
-// resolving or rejecting the deferred
-function execute(callback, value, resolve, reject) {
-    immediate(function() {
-        var result;
-        try {
-            result = callback(value);
-            if (result && typeof result.then === 'function') {
-                result.then(resolve, reject);
-            }
-            else {
-                resolve(result);
-            }
-        }
-        catch (error) {
-            reject(error);
-        }
-    });
-}
-
-module.exports = Promise;
-
-});
-require.register("liar/lib/index.js", function(exports, require, module){
-var promise = require('lie');
-promise.all = function(array) {
-    return promise(function(fulfill,reject){
-        var len = array.length;
-        var fulfilled = 0;
-        var out = [];
-        var onSuccess = function(n) {
-            return function(v) {
-                out[n] = v;
-                if (++fulfilled === len) {
-                    fulfill(out);
-                }
-            };
-        };
-        array.forEach(function(v, i) {
-            v.then(onSuccess(i), function(a) {
-                reject(a);
-            });
-        });
-    });
-};
-promise.some = function(array) {
-    return promise(function(fulfill,reject){
-        var len = array.length;
-        var rejected = 0;
-        var out = [];
-        function onFailure(n) {
-            return function(v) {
-                out[n] = v;
-                if (++rejected === len) {
-                    reject(out);
-                }
-            };
-        }
-        array.forEach(function(v, i) {
-            v.then(function(a) {
-                fulfill(a);
-            },onFailure(i));
-        });
-    });
-};
-
-module.exports = promise;
-});
-require.alias("calvinmetcalf-lie/lie.js", "liar/deps/lie/lie.js");
-require.alias("calvinmetcalf-lie/lie.js", "liar/deps/lie/index.js");
-require.alias("calvinmetcalf-lie/lie.js", "lie/index.js");
-require.alias("calvinmetcalf-setImmediate/lib/index.js", "calvinmetcalf-lie/deps/immediate/lib/index.js");
-require.alias("calvinmetcalf-setImmediate/lib/nextTick.js", "calvinmetcalf-lie/deps/immediate/lib/nextTick.js");
-require.alias("calvinmetcalf-setImmediate/lib/postMessage.js", "calvinmetcalf-lie/deps/immediate/lib/postMessage.js");
-require.alias("calvinmetcalf-setImmediate/lib/messageChannel.js", "calvinmetcalf-lie/deps/immediate/lib/messageChannel.js");
-require.alias("calvinmetcalf-setImmediate/lib/stateChange.js", "calvinmetcalf-lie/deps/immediate/lib/stateChange.js");
-require.alias("calvinmetcalf-setImmediate/lib/timeout.js", "calvinmetcalf-lie/deps/immediate/lib/timeout.js");
-require.alias("calvinmetcalf-setImmediate/lib/global.js", "calvinmetcalf-lie/deps/immediate/lib/global.js");
-require.alias("calvinmetcalf-setImmediate/lib/mutation.js", "calvinmetcalf-lie/deps/immediate/lib/mutation.js");
-require.alias("calvinmetcalf-setImmediate/lib/index.js", "calvinmetcalf-lie/deps/immediate/index.js");
-require.alias("calvinmetcalf-setImmediate/lib/index.js", "calvinmetcalf-setImmediate/index.js");
-
-require.alias("calvinmetcalf-lie/lie.js", "calvinmetcalf-lie/index.js");
-
-require.alias("liar/lib/index.js", "liar/index.js");
-
-if (typeof exports == "object") {
-  module.exports = require("liar");
-} else if (typeof define == "function" && define.amd) {
-  define(function(){ return require("liar"); });
-} else {
-  this["liar"] = require("liar");
-}})();
+;
