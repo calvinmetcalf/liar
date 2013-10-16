@@ -2,7 +2,7 @@
 return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var promise = require('lie');
 promise.all = function(array) {
-    return promise(function(fulfill,reject){
+    return promise(function(fulfill, reject) {
         var len = array.length;
         var fulfilled = 0;
         var out = [];
@@ -14,7 +14,16 @@ promise.all = function(array) {
                 }
             };
         };
-        array.forEach(function(v, i) {
+        array.map(function(a) {
+            if (a && typeof a.then === 'function') {
+                return a;
+            }
+            else {
+                return promise(function(yes) {
+                    yes(a);
+                });
+            }
+        }).forEach(function(v, i) {
             v.then(onSuccess(i), function(a) {
                 reject(a);
             });
@@ -22,10 +31,11 @@ promise.all = function(array) {
     });
 };
 promise.some = function(array) {
-    return promise(function(fulfill,reject){
+    return promise(function(fulfill, reject) {
         var len = array.length;
         var rejected = 0;
         var out = [];
+
         function onFailure(n) {
             return function(v) {
                 out[n] = v;
@@ -37,27 +47,35 @@ promise.some = function(array) {
         array.forEach(function(v, i) {
             v.then(function(a) {
                 fulfill(a);
-            },onFailure(i));
+            }, onFailure(i));
         });
     });
 };
-promise.map = function(array,func){
-    return promise.all(array.map(func));
-};
-promise.denodify= function (func) {
-  return function(){
-    var args = Array.prototype.concat.apply([],arguments);
-    return promise(function(resolve,reject){
-        args.push(function(err,success){
-            if(err) {
-                reject(err);
-            } else {
-                resolve(success);
-            }
+promise.map = function(array, func) {
+    if (Array.isArray(array)) {
+        return promise.all(array.map(func));
+    }
+    else if (typeof array.then === 'function') {
+        return array.then(function(a) {
+            return promise.all(a.map(func));
         });
-        func.apply(undefined,args);
-    });
-  };
+    }
+};
+promise.denodify = function(func) {
+    return function() {
+        var args = Array.prototype.concat.apply([], arguments);
+        return promise(function(resolve, reject) {
+            args.push(function(err, success) {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve(success);
+                }
+            });
+            func.apply(undefined, args);
+        });
+    };
 };
 module.exports = promise;
 },{"lie":3}],2:[function(require,module,exports){
