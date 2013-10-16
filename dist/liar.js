@@ -44,6 +44,21 @@ promise.some = function(array) {
 promise.map = function(array,func){
     return promise.all(array.map(func));
 };
+promise.denodify= function (func) {
+  return function(){
+    var args = Array.prototype.concat.apply([],arguments);
+    return promise(function(resolve,reject){
+        args.push(function(err,success){
+            if(err) {
+                reject(err);
+            } else {
+                resolve(success);
+            }
+        });
+        func.apply(undefined,args);
+    });
+  };
+};
 module.exports = promise;
 },{"lie":3}],2:[function(require,module,exports){
 // shim for using process in browser
