@@ -1,6 +1,6 @@
 {
   "name": "liar",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "a toolbelt of deceit",
   "main": "lib/index.js",
   "scripts": {
