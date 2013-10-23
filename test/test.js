@@ -116,16 +116,6 @@ describe("some", function() {
     });
 });
 describe("map", function() {
-    function loveNumbersThen(n){
-        if(n.then && typeof n.then === 'function'){
-            throw 'fit';
-        }
-        if(typeof n === 'number'){
-            return promise.resolve(n);
-        }else{
-            throw promise.reject(n);
-        }
-    }
     describe('with values',function(){
         function loveNumbers(n){
             if(n.then && typeof n.then === 'function'){

@@ -1,6 +1,6 @@
 {
   "name": "liar",
-  "version": "0.0.7",
+  "version": "0.1.0",
   "description": "a tool belt of deceit",
   "main": "lib/index.js",
   "scripts": {
@@ -32,6 +32,15 @@
     "istanbul": "~0.1.44"
   },
   "dependencies": {
-    "lie": "~2.0.6"
+    "lie": "~2.0.6",
+    "lie-cast": "~0.1.1",
+    "lie-resolve": "~0.1.0",
+    "lie-all": "~0.1.0",
+    "lie-reject": "~0.1.1",
+    "lie-use": "~0.1.0",
+    "lie-map": "~0.1.0",
+    "lie-race": "~0.1.0",
+    "lie-some": "~0.1.0",
+    "lie-denodify": "~0.1.0"
   }
 }

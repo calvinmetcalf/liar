@@ -1,168 +1,17 @@
 !function(e){"object"==typeof exports?module.exports=e():"function"==typeof define&&define.amd?define(e):"undefined"!=typeof window?window.liar=e():"undefined"!=typeof global?global.liar=e():"undefined"!=typeof self&&(self.liar=e())}(function(){var define,module,exports;
 return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var promise = require('lie');
-var cast = require('./cast');
-function all(array) {
-    return promise(function(fulfill, reject) {
-        var len = array.length;
-        if(!len){
-            fulfill([]);
-        }
-        var fulfilled = 0;
-        var out = [];
-        var onSuccess = function(n) {
-            return function(v) {
-                out[n] = v;
-                if (++fulfilled === len) {
-                    fulfill(out);
-                }
-            };
-        };
-        array.map(cast).forEach(function(v, i) {
-            v.then(onSuccess(i), function(a) {
-                reject(a);
-            });
-        });
-    });
-}
-module.exports = all;
-},{"./cast":2,"lie":13}],2:[function(require,module,exports){
-var resolve = require('./resolve');
-function cast(thing){
-    if(thing && typeof thing.then === 'function'){
-        return thing;
-    }else{
-        return resolve(thing);
-    }
-}
-module.exports = cast;
-},{"./resolve":9}],3:[function(require,module,exports){
-var promise = require('lie');
-function denodify(func) {
-    return function() {
-        var args = Array.prototype.concat.apply([], arguments);
-        return promise(function(resolve, reject) {
-            args.push(function(err, success) {
-                if (err) {
-                    reject(err);
-                }
-                else {
-                    resolve(success);
-                }
-            });
-            func.apply(undefined, args);
-        });
-    };
-}
-module.exports = denodify;
-},{"lie":13}],4:[function(require,module,exports){
-var promise = require('lie');
-promise.use = require('./use');
-promise.resolve = require('./resolve');
-promise.reject = require('./reject');
-promise.all = require('./all');
-promise.race = require('./race');
-promise.cast = require('./cast');
-promise.some = require('./some');
-promise.map = require('./map');
-promise.denodify = require('./denodify');
+promise.use = require('lie-use');
+promise.resolve = require('lie-resolve');
+promise.reject = require('lie-reject');
+promise.all = require('lie-all');
+promise.race = require('lie-race');
+promise.cast = require('lie-cast');
+promise.some = require('lie-some');
+promise.map = require('lie-map');
+promise.denodify = require('lie-denodify');
 module.exports = promise;
-},{"./all":1,"./cast":2,"./denodify":3,"./map":5,"./race":7,"./reject":8,"./resolve":9,"./some":10,"./use":11,"lie":13}],5:[function(require,module,exports){
-var use = require('./use');
-var all = require('./all');
-var qMap = require('./qmap');
-var resolve = require('./resolve');
-function map(array, func) {
-    return use(array,function(arr){
-        return all(qMap(arr,function(a){
-            return resolve(a).then(function(b){
-                return func(b);
-            });
-        }));
-    });
-}
-module.exports = map;
-},{"./all":1,"./qmap":6,"./resolve":9,"./use":11}],6:[function(require,module,exports){
-function qMap(arr,func){
-    var len = arr.length;
-    if(!len){
-        return [];
-    }
- var i = 0;
- var out = new Array(len);
- while(i<len){
-     out[i]=func(arr[i]);
-     i++;
- }
- return out;
-}
-module.exports = qMap;
-},{}],7:[function(require,module,exports){
-var promise = require('lie');
-function race(array) {
-    return promise(function(fulfill, reject) {
-         var len = array.length;
-         var i = 0;
-         while(i<len){
-             array[i++].then(fulfill, reject);
-         }
-    });
-}
-module.exports = race;
-},{"lie":13}],8:[function(require,module,exports){
-var promise = require('lie');
-function reject(value){
-    return promise(function(yes,no){
-        no(value);
-    });
-}
-module.exports = reject;
-},{"lie":13}],9:[function(require,module,exports){
-var promise = require('lie');
-function resolve(value){
-    return promise(function(yes){
-        yes(value);
-    });
-}
-module.exports = resolve;
-},{"lie":13}],10:[function(require,module,exports){
-var promise = require('lie');
-var cast = require('./cast');
-function some(array) {
-    return promise(function(fulfill, reject) {
-        var len = array.length;
-        var succeded = [];
-        var failed = [];
-        function check(){
-            if (failed.length === len) {
-                reject(failed);
-            }else if((succeded.length+failed.length)===len){
-                 fulfill(succeded);
-            }
-        }
-
-        array.map(cast).forEach(function(v) {
-            v.then(function(a) {
-                succeded.push(a);
-                check();
-            },function(a) {
-                failed.push(a);
-                check();
-            });
-        });
-    });
-}
-module.exports = some;
-},{"./cast":2,"lie":13}],11:[function(require,module,exports){
-function use(thing,func){
-    if(typeof thing.then === 'function'){
-        return thing.then(func);
-    }else{
-        return func(thing);
-    }
-}
-module.exports = use;
-},{}],12:[function(require,module,exports){
+},{"lie":13,"lie-all":3,"lie-cast":4,"lie-denodify":5,"lie-map":6,"lie-race":8,"lie-reject":9,"lie-resolve":10,"lie-some":11,"lie-use":12}],2:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -216,6 +65,157 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
+},{}],3:[function(require,module,exports){
+var promise = require('lie');
+var cast = require('lie-cast');
+function all(array) {
+    return promise(function(fulfill, reject) {
+        var len = array.length;
+        if(!len){
+            fulfill([]);
+        }
+        var fulfilled = 0;
+        var out = [];
+        var onSuccess = function(n) {
+            return function(v) {
+                out[n] = v;
+                if (++fulfilled === len) {
+                    fulfill(out);
+                }
+            };
+        };
+        array.map(cast).forEach(function(v, i) {
+            v.then(onSuccess(i), function(a) {
+                reject(a);
+            });
+        });
+    });
+}
+module.exports = all;
+},{"lie":13,"lie-cast":4}],4:[function(require,module,exports){
+var resolve = require('lie-resolve');
+function cast(thing){
+    if(thing && typeof thing.then === 'function'){
+        return thing;
+    }else{
+        return resolve(thing);
+    }
+}
+module.exports = cast;
+},{"lie-resolve":10}],5:[function(require,module,exports){
+var promise = require('lie');
+function denodify(func) {
+    return function() {
+        var args = Array.prototype.concat.apply([], arguments);
+        return promise(function(resolve, reject) {
+            args.push(function(err, success) {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve(success);
+                }
+            });
+            func.apply(undefined, args);
+        });
+    };
+}
+module.exports = denodify;
+},{"lie":13}],6:[function(require,module,exports){
+var use = require('lie-use');
+var all = require('lie-all');
+var qMap = require('./quickMap');
+var resolve = require('lie-resolve');
+function map(array, func) {
+    return use(array,function(arr){
+        return all(qMap(arr,function(a){
+            return resolve(a).then(function(b){
+                return func(b);
+            });
+        }));
+    });
+}
+module.exports = map;
+},{"./quickMap":7,"lie-all":3,"lie-resolve":10,"lie-use":12}],7:[function(require,module,exports){
+function qMap(arr,func){
+    var len = arr.length;
+    if(!len){
+        return [];
+    }
+ var i = 0;
+ var out = new Array(len);
+ while(i<len){
+     out[i]=func(arr[i]);
+     i++;
+ }
+ return out;
+}
+module.exports = qMap;
+},{}],8:[function(require,module,exports){
+var promise = require('lie');
+function race(array) {
+    return promise(function(fulfill, reject) {
+         var len = array.length;
+         var i = 0;
+         while(i<len){
+             array[i++].then(fulfill, reject);
+         }
+    });
+}
+module.exports = race;
+},{"lie":13}],9:[function(require,module,exports){
+var promise = require('lie');
+function reject(value){
+    return promise(function(yes,no){
+        no(value);
+    });
+}
+module.exports = reject;
+},{"lie":13}],10:[function(require,module,exports){
+var promise = require('lie');
+function resolve(value){
+    return promise(function(yes){
+        yes(value);
+    });
+}
+module.exports = resolve;
+},{"lie":13}],11:[function(require,module,exports){
+var promise = require('lie');
+var cast = require('lie-cast');
+function some(array) {
+    return promise(function(fulfill, reject) {
+        var len = array.length;
+        var succeded = [];
+        var failed = [];
+        function check(){
+            if (failed.length === len) {
+                reject(failed);
+            }else if((succeded.length+failed.length)===len){
+                 fulfill(succeded);
+            }
+        }
+
+        array.map(cast).forEach(function(v) {
+            v.then(function(a) {
+                succeded.push(a);
+                check();
+            },function(a) {
+                failed.push(a);
+                check();
+            });
+        });
+    });
+}
+module.exports = some;
+},{"lie":13,"lie-cast":4}],12:[function(require,module,exports){
+function use(thing,func){
+    if(typeof thing.then === 'function'){
+        return thing.then(func);
+    }else{
+        return func(thing);
+    }
+}
+module.exports = use;
 },{}],13:[function(require,module,exports){
 var immediate = require('immediate');
 // Creates a deferred: an object with a promise and corresponding resolve/reject methods
@@ -436,7 +436,7 @@ exports.test = function () {
 exports.install = function () {
     return process.nextTick;
 };
-},{"__browserify_process":12}],19:[function(require,module,exports){
+},{"__browserify_process":2}],19:[function(require,module,exports){
 "use strict";
 var globe = require("./global");
 exports.test = function () {
@@ -522,7 +522,7 @@ exports.install = function (t) {
         setTimeout(t, 0);
     };
 };
-},{}]},{},[4])
-(4)
+},{}]},{},[1])
+(1)
 });
 ;
