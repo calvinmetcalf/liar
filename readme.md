@@ -13,6 +13,19 @@ npm install liar
 var promise = require('liar');
 ```
 
+###[basic promise](https://github.com/calvinmetcalf/lie)
+
+```javascript
+promise(function(resolve,reject){
+    resolve(value);
+    //or
+    rejext(reason);
+});
+```
+
+a shortcut to [my library lie](ttps://github.com/calvinmetcalf/lie). You need to give it a function
+which takes 2 arguments, a function to call on success and one to call on failure.
+
 ###[all](https://github.com/calvinmetcalf/lie-all)
 
 ```javascript
