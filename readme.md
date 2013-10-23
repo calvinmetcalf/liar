@@ -1,4 +1,3 @@
-
 # liar
 
   A modular collection of tools for asynchronous programing via promises, all tools are available as a bundle here or standalone in their own repo.
@@ -19,7 +18,7 @@ var promise = require('liar');
 promise(function(resolve,reject){
     resolve(value);
     //or
-    rejext(reason);
+    reject(reason);
 });
 ```
 
