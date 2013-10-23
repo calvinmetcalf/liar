@@ -34,14 +34,5 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-browserify');
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-uglify');
-     grunt.registerTask('test',function(){
-         var done = this.async();
-         test(function(err){
-             if(err){
-                 grunt.log.error(err);
-             }
-             done();
-         });
-     });
     grunt.registerTask('default', ['jshint','browserify','uglify']);
 };

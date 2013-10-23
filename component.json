@@ -1,8 +1,8 @@
 {
   "name": "liar",
   "repo": "calvinmetcalf/liar",
-  "description": "a toolbelt of deceit",
-  "version": "0.0.6",
+  "description": "a tool belt of deceit",
+  "version": "0.0.7",
   "keywords": [],
   "dependencies": {
     "calvinmetcalf/lie": "2.0.6"
@@ -11,7 +11,17 @@
   "license": "MIT",
   "main": "lib/index.js",
   "scripts": [
-    "lib/index.js"
+    "lib/all.js",
+    "lib/cast.js",
+    "lib/denodify.js",
+    "lib/index.js",
+    "lib/map.js",
+    "lib/qmap.js",
+    "lib/race,
+    "lib/reject.js",
+    "lib/resolve.js",
+    "lib/some.js",
+    "lib/use.js",
   ],
   "remotes": []
 }

@@ -1,9 +1,13 @@
 !function(e){"object"==typeof exports?module.exports=e():"function"==typeof define&&define.amd?define(e):"undefined"!=typeof window?window.liar=e():"undefined"!=typeof global?global.liar=e():"undefined"!=typeof self&&(self.liar=e())}(function(){var define,module,exports;
 return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var promise = require('lie');
-promise.all = function(array) {
+var cast = require('./cast');
+function all(array) {
     return promise(function(fulfill, reject) {
         var len = array.length;
+        if(!len){
+            fulfill([]);
+        }
         var fulfilled = 0;
         var out = [];
         var onSuccess = function(n) {
@@ -14,54 +18,27 @@ promise.all = function(array) {
                 }
             };
         };
-        array.map(function(a) {
-            if (a && typeof a.then === 'function') {
-                return a;
-            }
-            else {
-                return promise(function(yes) {
-                    yes(a);
-                });
-            }
-        }).forEach(function(v, i) {
+        array.map(cast).forEach(function(v, i) {
             v.then(onSuccess(i), function(a) {
                 reject(a);
             });
         });
     });
-};
-promise.some = function(array) {
-    return promise(function(fulfill, reject) {
-        var len = array.length;
-        var rejected = 0;
-        var out = [];
-
-        function onFailure(n) {
-            return function(v) {
-                out[n] = v;
-                if (++rejected === len) {
-                    reject(out);
-                }
-            };
-        }
-        array.forEach(function(v, i) {
-            v.then(function(a) {
-                fulfill(a);
-            }, onFailure(i));
-        });
-    });
-};
-promise.map = function(array, func) {
-    if (Array.isArray(array)) {
-        return promise.all(array.map(func));
+}
+module.exports = all;
+},{"./cast":2,"lie":13}],2:[function(require,module,exports){
+var resolve = require('./resolve');
+function cast(thing){
+    if(thing && typeof thing.then === 'function'){
+        return thing;
+    }else{
+        return resolve(thing);
     }
-    else if (typeof array.then === 'function') {
-        return array.then(function(a) {
-            return promise.all(a.map(func));
-        });
-    }
-};
-promise.denodify = function(func) {
+}
+module.exports = cast;
+},{"./resolve":9}],3:[function(require,module,exports){
+var promise = require('lie');
+function denodify(func) {
     return function() {
         var args = Array.prototype.concat.apply([], arguments);
         return promise(function(resolve, reject) {
@@ -76,9 +53,116 @@ promise.denodify = function(func) {
             func.apply(undefined, args);
         });
     };
-};
+}
+module.exports = denodify;
+},{"lie":13}],4:[function(require,module,exports){
+var promise = require('lie');
+promise.use = require('./use');
+promise.resolve = require('./resolve');
+promise.reject = require('./reject');
+promise.all = require('./all');
+promise.race = require('./race');
+promise.cast = require('./cast');
+promise.some = require('./some');
+promise.map = require('./map');
+promise.denodify = require('./denodify');
 module.exports = promise;
-},{"lie":3}],2:[function(require,module,exports){
+},{"./all":1,"./cast":2,"./denodify":3,"./map":5,"./race":7,"./reject":8,"./resolve":9,"./some":10,"./use":11,"lie":13}],5:[function(require,module,exports){
+var use = require('./use');
+var all = require('./all');
+var qMap = require('./qmap');
+var resolve = require('./resolve');
+function map(array, func) {
+    return use(array,function(arr){
+        return all(qMap(arr,function(a){
+            return resolve(a).then(function(b){
+                return func(b);
+            });
+        }));
+    });
+}
+module.exports = map;
+},{"./all":1,"./qmap":6,"./resolve":9,"./use":11}],6:[function(require,module,exports){
+function qMap(arr,func){
+    var len = arr.length;
+    if(!len){
+        return [];
+    }
+ var i = 0;
+ var out = new Array(len);
+ while(i<len){
+     out[i]=func(arr[i]);
+     i++;
+ }
+ return out;
+}
+module.exports = qMap;
+},{}],7:[function(require,module,exports){
+var promise = require('lie');
+function race(array) {
+    return promise(function(fulfill, reject) {
+         var len = array.length;
+         var i = 0;
+         while(i<len){
+             array[i++].then(fulfill, reject);
+         }
+    });
+}
+module.exports = race;
+},{"lie":13}],8:[function(require,module,exports){
+var promise = require('lie');
+function reject(value){
+    return promise(function(yes,no){
+        no(value);
+    });
+}
+module.exports = reject;
+},{"lie":13}],9:[function(require,module,exports){
+var promise = require('lie');
+function resolve(value){
+    return promise(function(yes){
+        yes(value);
+    });
+}
+module.exports = resolve;
+},{"lie":13}],10:[function(require,module,exports){
+var promise = require('lie');
+var cast = require('./cast');
+function some(array) {
+    return promise(function(fulfill, reject) {
+        var len = array.length;
+        var succeded = [];
+        var failed = [];
+        function check(){
+            if (failed.length === len) {
+                reject(failed);
+            }else if((succeded.length+failed.length)===len){
+                 fulfill(succeded);
+            }
+        }
+
+        array.map(cast).forEach(function(v) {
+            v.then(function(a) {
+                succeded.push(a);
+                check();
+            },function(a) {
+                failed.push(a);
+                check();
+            });
+        });
+    });
+}
+module.exports = some;
+},{"./cast":2,"lie":13}],11:[function(require,module,exports){
+function use(thing,func){
+    if(typeof thing.then === 'function'){
+        return thing.then(func);
+    }else{
+        return func(thing);
+    }
+}
+module.exports = use;
+},{}],12:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -132,7 +216,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],3:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 var immediate = require('immediate');
 // Creates a deferred: an object with a promise and corresponding resolve/reject methods
 function Promise(resolver) {
@@ -249,9 +333,9 @@ function execute(callback, value, resolve, reject) {
 }
 module.exports = Promise;
 
-},{"immediate":5}],4:[function(require,module,exports){
+},{"immediate":15}],14:[function(require,module,exports){
 var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {};module.exports = typeof global === "object" && global ? global : this;
-},{}],5:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 "use strict";
 var types = [
     require("./nextTick"),
@@ -302,7 +386,7 @@ retFunc.clear = function (n) {
 };
 module.exports = retFunc;
 
-},{"./messageChannel":6,"./mutation":7,"./nextTick":8,"./postMessage":9,"./realSetImmediate":10,"./stateChange":11,"./timeout":12}],6:[function(require,module,exports){
+},{"./messageChannel":16,"./mutation":17,"./nextTick":18,"./postMessage":19,"./realSetImmediate":20,"./stateChange":21,"./timeout":22}],16:[function(require,module,exports){
 "use strict";
 var globe = require("./global");
 exports.test = function () {
@@ -316,7 +400,7 @@ exports.install = function (func) {
         channel.port2.postMessage(0);
     };
 };
-},{"./global":4}],7:[function(require,module,exports){
+},{"./global":14}],17:[function(require,module,exports){
 "use strict";
 //based off rsvp
 //https://github.com/tildeio/rsvp.js/blob/master/lib/rsvp/async.js
@@ -342,7 +426,7 @@ exports.install = function (handle) {
         element.setAttribute("drainQueue", "drainQueue");
     };
 };
-},{"./global":4}],8:[function(require,module,exports){
+},{"./global":14}],18:[function(require,module,exports){
 var process=require("__browserify_process");"use strict";
 exports.test = function () {
     // Don't get fooled by e.g. browserify environments.
@@ -352,7 +436,7 @@ exports.test = function () {
 exports.install = function () {
     return process.nextTick;
 };
-},{"__browserify_process":2}],9:[function(require,module,exports){
+},{"__browserify_process":12}],19:[function(require,module,exports){
 "use strict";
 var globe = require("./global");
 exports.test = function () {
@@ -390,7 +474,7 @@ exports.install = function (func) {
         globe.postMessage(codeWord, "*");
     };
 };
-},{"./global":4}],10:[function(require,module,exports){
+},{"./global":14}],20:[function(require,module,exports){
 "use strict";
 var globe = require("./global");
 exports.test = function () {
@@ -402,7 +486,7 @@ exports.install = function (handle) {
     return globe.setTimeout.bind(globe,handle,0);
 };
 
-},{"./global":4}],11:[function(require,module,exports){
+},{"./global":14}],21:[function(require,module,exports){
 "use strict";
 var globe = require("./global");
 exports.test = function () {
@@ -427,7 +511,7 @@ exports.install = function (handle) {
         return handle;
     };
 };
-},{"./global":4}],12:[function(require,module,exports){
+},{"./global":14}],22:[function(require,module,exports){
 "use strict";
 exports.test = function () {
     return true;
@@ -438,7 +522,7 @@ exports.install = function (t) {
         setTimeout(t, 0);
     };
 };
-},{}]},{},[1])
-(1)
+},{}]},{},[4])
+(4)
 });
 ;
