@@ -1,7 +1,7 @@
 {
   "name": "liar",
-  "version": "0.1.1",
-  "description": "a tool belt of deceit",
+  "version": "0.1.2",
+  "description": "A modular collection of tools for asynchronous programing via promises ",
   "main": "lib/index.js",
   "scripts": {
     "test": "./node_modules/istanbul/lib/cli.js test ./node_modules/mocha/bin/_mocha test/test.js"
@@ -32,15 +32,17 @@
     "istanbul": "~0.1.44"
   },
   "dependencies": {
-    "lie": "~2.0.6",
+    "lie": "~2.0.7",
     "lie-cast": "~0.1.1",
     "lie-resolve": "~0.1.0",
-    "lie-all": "~0.1.0",
+    "lie-all": "~0.1.2",
     "lie-reject": "~0.1.1",
     "lie-use": "~0.1.0",
     "lie-map": "~0.1.1",
-    "lie-race": "~0.1.0",
-    "lie-some": "~0.1.0",
-    "lie-denodify": "~0.1.0"
+    "lie-race": "~0.1.1",
+    "lie-some": "~0.1.1",
+    "lie-denodify": "~0.1.0",
+    "lie-lfold": "~0.1.0",
+    "lie-apply": "~0.1.0"
   }
 }

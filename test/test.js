@@ -315,3 +315,57 @@ describe("denodify",function(){
         });
     });
 });
+describe("apply",function(){
+    it('should work without a value',function(){
+        return promise.apply(function(){return promise.cast(1)}).should.become(1);
+    });
+    it('should work with a promise',function(){
+        return promise.apply(function(a){
+            return a+a;
+        },promise.cast(2)).should.become(4);
+    });
+    it('should work with a value',function(){
+        return promise.apply(function(a){
+            return a+a;
+        },2).should.become(4);
+    });
+    it('should work with several values',function(){
+        return promise.apply(function(a,b,c){
+            return a+b+c;
+        },'a','b','c').should.become('abc');
+    });
+    it('should work with several promises',function(){
+        return promise.apply(function(a,b,c){
+            return a+b+c;
+        },promise.cast('a'),promise.cast('b'),promise.cast('c')).should.become('abc');
+    });
+    it('should work with a mixture',function(){
+        return promise.apply(function(a,b,c){
+            return a+b+c;
+        },promise.cast('a'),'b',promise.cast('c')).should.become('abc');
+    });
+});
+describe("lfold", function() {
+    it('should work',function(){
+        return promise.lfold([1,2,3,4,5],function(a,b){
+            a.push(b);
+            return promise.resolve(a);
+        },[]).should.become([1,2,3,4,5]);
+    });
+    it('should work without an accumulator',function(){
+        return promise.lfold([[],1,2,3,4,5],function(a,b){
+            a.push(b);
+            return a;
+        }).should.become([1,2,3,4,5]);
+    });
+    it('should work with a mixture of things which returns a promise',function(){
+        return promise.lfold([2,promise.resolve(5),3],function(a,b){
+            return promise.resolve(a*b);
+        }).should.become(30);
+    });
+    it('should work with a mixture of things which return a value',function(){
+        return promise.lfold([2,promise.resolve(5),3],function(a,b){
+            return a*b;
+        }).should.become(30);
+    });
+});

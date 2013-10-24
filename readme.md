@@ -98,6 +98,22 @@ promise.denodify(function)
 
 takes as an argument a function which has a callback as it's last argument, returns a function that acts identically except it returns a promice instead of taking a callback.
 
+###[fold left](https://github.com/calvinmetcalf/lie-lfold)
+
+```javascript
+promise.lfold(array of things,function,accumulator)
+```
+
+like Array.prototype.reduce, but the array may include promises or values and the function may return a promise or a value. `promise.lfold` always return a promise.
+
+###[apply](https://github.com/calvinmetcalf/lie-apply)
+
+```javascript
+promise.apply(function, one or more values or promises)
+```
+
+calls the function with the values or promises once they all resolve, returns the result.
+
 ## License
 
   MIT
