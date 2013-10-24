@@ -626,3 +626,17 @@ describe("zipwith", function() {
         });
     });
 });
+describe("filter", function() {
+  it("should work", function() {
+    return promise.filter([1,2,3,4],function(v){return v%2}).should.become([1,3]);
+  });
+  it("should work if all are false", function() {
+    return promise.filter([1,2,3,4],function(v){return false;}).should.become([]);
+  });
+  it("should work async", function() {
+    return promise.filter([1,promise.resolve(2),promise.resolve(3),4],function(v){return v%2}).should.become([1,3]);
+  });
+  it("should work async if all are false", function() {
+    return promise.filter([1,promise.resolve(2),promise.resolve(3),4],function(v){return false;}).should.become([]);
+  });
+});

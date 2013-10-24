@@ -145,10 +145,18 @@ promise.zips the 2 or more arrays up such that `zip([1,2],['a','b'])` returns `[
 ###[zipwith](https://github.com/calvinmetcalf/lie-zipwith)
 
 ```javascript
-zipwith(function,array of things[,...])
+promise.zipwith(function,array of things[,...])
 ```
 
 zips the 2 or more arrays up with a function 'func' such that `zip(func(1,2),func('a','b'))` returns `[func(1,'a'),func(2,'b')];`. When called with one array it is equivalent to [lie-map](https://github.com/calvinmetcalf/lie-map) (with the arguments in reverse order).
+
+###[filter](https://github.com/calvinmetcalf/lie-filter)
+
+```javascript
+promise.filter(array, function)
+```
+
+returns an array filtered based on the function, aka only truthy values are returned.
 
 ## License
 
