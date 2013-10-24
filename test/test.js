@@ -348,14 +348,43 @@ describe("apply",function(){
 describe("lfold", function() {
     it('should work',function(){
         return promise.lfold([1,2,3,4,5],function(a,b){
-            a.push(b);
-            return promise.resolve(a);
+            return promise.resolve(a.concat(b));
+        },[]).should.become([1,2,3,4,5]);
+    });
+    it('should work async',function(){
+        return promise.lfold([
+            promise(function(yes){
+                setTimeout(function(){
+                    yes(1);
+                },50);
+            }),
+            promise(function(yes){
+                setTimeout(function(){
+                    yes(2);
+                },20);
+            }),
+            promise(function(yes){
+                setTimeout(function(){
+                    yes(3);
+                },40);
+            }),
+            promise(function(yes){
+                setTimeout(function(){
+                    yes(4);
+                },10);
+            }),
+            promise(function(yes){
+                setTimeout(function(){
+                    yes(5);
+                },30);
+            })
+        ],function(a,b){
+            return promise.resolve(a.concat(b));
         },[]).should.become([1,2,3,4,5]);
     });
     it('should work without an accumulator',function(){
         return promise.lfold([[],1,2,3,4,5],function(a,b){
-            a.push(b);
-            return a;
+            return a.concat(b);
         }).should.become([1,2,3,4,5]);
     });
     it('should work with a mixture of things which returns a promise',function(){
@@ -367,5 +396,233 @@ describe("lfold", function() {
         return promise.lfold([2,promise.resolve(5),3],function(a,b){
             return a*b;
         }).should.become(30);
+    });
+});
+describe("rfold", function() {
+    it('should work',function(){
+        return promise.rfold([1,2,3,4,5],function(a,b){
+            return promise.resolve(a.concat(b));
+        },[]).should.become([5,4,3,2,1]);
+    });
+    it('should work async',function(){
+        return promise.rfold([
+            promise(function(yes){
+                setTimeout(function(){
+                    yes(1);
+                },50);
+            }),
+            promise(function(yes){
+                setTimeout(function(){
+                    yes(2);
+                },20);
+            }),
+            promise(function(yes){
+                setTimeout(function(){
+                    yes(3);
+                },40);
+            }),
+            promise(function(yes){
+                setTimeout(function(){
+                    yes(4);
+                },10);
+            }),
+            promise(function(yes){
+                setTimeout(function(){
+                    yes(5);
+                },30);
+            })
+        ],function(a,b){
+            return promise.resolve(a.concat(b));
+        },[]).should.become([5,4,3,2,1]);
+    });
+    it('should work without an accumulator',function(){
+        return promise.rfold([1,2,3,4,5,[]],function(a,b){
+            return a.concat(b);
+        }).should.become([5,4,3,2,1]);
+    });
+    it('should work with a mixture of things which returns a promise',function(){
+        return promise.rfold([2,promise.resolve(5),3],function(a,b){
+            return promise.resolve(a*b);
+        }).should.become(30);
+    });
+    it('should work with a mixture of things which return a value',function(){
+        return promise.rfold([2,promise.resolve(5),3],function(a,b){
+            return a*b;
+        }).should.become(30);
+    });
+});
+describe("fold", function() {
+    it('should work with a mixture of things which returns a promise',function(){
+        return promise.fold([2,promise.resolve(5),3],function(a,b){
+            return promise.resolve(a*b);
+        }).should.become(30);
+    });
+    it('should work with a mixture of things which return a value',function(){
+        return promise.fold([2,promise.resolve(5),3],function(a,b){
+            return a*b;
+        }).should.become(30);
+    });
+    it('should work',function(){
+        return promise.fold([
+            promise(function(yes){
+                setTimeout(function(){
+                    yes(5);
+                },50);
+            }),
+            promise(function(yes){
+                setTimeout(function(){
+                    yes(2);
+                },20);
+            }),
+            promise(function(yes){
+                setTimeout(function(){
+                    yes(4);
+                },40);
+            }),
+            promise(function(yes){
+                setTimeout(function(){
+                    yes(1);
+                },10);
+            }),
+            promise(function(yes){
+                setTimeout(function(){
+                    yes(3);
+                },30);
+            })
+        ],function(a,b){
+            return promise.resolve(a.concat(b));
+        },[]).should.become([1,2,3,4,5]);
+    });
+    it('should work without an accumulator',function(){
+        return promise.fold([[],
+            promise(function(yes){
+                setTimeout(function(){
+                    yes(5);
+                },50);
+            }),
+            promise(function(yes){
+                setTimeout(function(){
+                    yes(2);
+                },20);
+            }),
+            promise(function(yes){
+                setTimeout(function(){
+                    yes(4);
+                },40);
+            }),
+            promise(function(yes){
+                setTimeout(function(){
+                    yes(1);
+                },10);
+            }),
+            promise(function(yes){
+                setTimeout(function(){
+                    yes(3);
+                },30);
+            })],function(a,b){
+            return promise.resolve(a.concat(b));
+        }).should.become([1,2,3,4,5]);
+    });
+});
+describe("zip", function() {
+    describe('should work on values',function(){
+        it('with one array',function(){
+            return promise.zip([1,2,3,4,5]).should.become([[1],[2],[3],[4],[5]]);
+        });
+        it('with two arrays',function(){
+            return promise.zip([1,2,3,4,5],['a','b','c','d','e']).should.become([[1,'a'],[2,'b'],[3,'c'],[4,'d'],[5,'e']]);
+        });
+        it('with three arrays',function(){
+            return promise.zip([1,2,3,4,5],['a','b','c','d','e'],[10,20,30,40,50]).should.become([[1,'a',10],[2,'b',20],[3,'c',30],[4,'d',40],[5,'e',50]]);
+        });
+    });
+    describe('should work on promises',function(){
+        it('with one array',function(){
+            return promise.zip([1,2,3,4,5].map(promise.resolve)).should.become([[1],[2],[3],[4],[5]]);
+        });
+        it('with two arrays',function(){
+            return promise.zip([1,2,3,4,5].map(promise.resolve),['a','b','c','d','e'].map(promise.resolve)).should.become([[1,'a'],[2,'b'],[3,'c'],[4,'d'],[5,'e']]);
+        });
+        it('with three arrays',function(){
+            return promise.zip([1,2,3,4,5].map(promise.resolve),['a','b','c','d','e'].map(promise.resolve),[10,20,30,40,50].map(promise.resolve)).should.become([[1,'a',10],[2,'b',20],[3,'c',30],[4,'d',40],[5,'e',50]]);
+        });
+    });
+    describe('should work on a mixuture of promises and values',function(){
+        it('with one array',function(){
+            return promise.zip([promise.resolve(1),2,promise.resolve(3),4,5]).should.become([[1],[2],[3],[4],[5]]);
+        });
+        it('with two arrays',function(){
+            return promise.zip([1,2,3,4,5].map(promise.resolve),['a','b','c','d','e']).should.become([[1,'a'],[2,'b'],[3,'c'],[4,'d'],[5,'e']]);
+        });
+        it('with three arrays',function(){
+            return promise.zip([1,2,3,4,5],['a','b','c','d','e'].map(promise.resolve),[10,20,promise.resolve(30),40,50]).should.become([[1,'a',10],[2,'b',20],[3,'c',30],[4,'d',40],[5,'e',50]]);
+        });
+    });
+    describe('should work on uneven sized arrays',function(){
+        it('with two arrays one shorter',function(){
+            return promise.zip([1,2,3,4,5].map(promise.resolve),['a','b','c','d']).should.become([[1,'a'],[2,'b'],[3,'c'],[4,'d']]);
+        });
+        it('with three arrays all different sizes',function(){
+            return promise.zip([1,2,3,4,5,6],['a','b','c'].map(promise.resolve),[10,20,promise.resolve(30),40,50]).should.become([[1,'a',10],[2,'b',20],[3,'c',30]]);
+        });
+    });
+});
+describe("zipwith", function() {
+    describe('should work on values',function(){
+        it('with one array',function(){
+            return promise.zipwith(function(a){return a+a},[1,2,3,4,5]).should.become([2,4,6,8,10]);
+        });
+        it('with two arrays',function(){
+            return promise.zipwith(function(a,b){
+                return a+b;
+            },[1,2,3,4,5],['a','b','c','d','e']).should.become(['1a','2b','3c','4d','5e']);
+        });
+        it('with three arrays',function(){
+            return promise.zipwith(function(a,b,c){
+                return a+b+c;
+            },[1,2,3,4,5],['a','b','c','d','e'],[10,20,30,40,50]).should.become(['1a10','2b20','3c30','4d40','5e50']);
+        });
+    });
+    describe('should work on promises',function(){
+        it('with one array',function(){
+            return promise.zipwith(function(a){return a+a},[1,2,3,4,5].map(promise.resolve)).should.become([2,4,6,8,10]);
+        });
+        it('with two arrays',function(){
+            return promise.zipwith(function(a,b){
+                return a+b;
+            },[1,2,3,4,5].map(promise.resolve),['a','b','c','d','e'].map(promise.resolve)).should.become(['1a','2b','3c','4d','5e']);
+        });
+        it('with three arrays',function(){
+            return promise.zipwith(function(a,b,c){
+                return a+b+c;
+            },[1,2,3,4,5].map(promise.resolve),['a','b','c','d','e'].map(promise.resolve),[10,20,30,40,50].map(promise.resolve)).should.become(['1a10','2b20','3c30','4d40','5e50']);
+        });
+    });
+    describe('should work on a mixuture of promises and values',function(){
+        it('with one array',function(){
+            return promise.zipwith(function(a){return a+a},[promise.resolve(1),2,promise.resolve(3),4,5]).should.become([2,4,6,8,10]);
+        });
+        it('with two arrays',function(){
+            return promise.zipwith(function(a,b){
+                return a+b;
+            },[1,2,3,4,5].map(promise.resolve),['a','b','c','d','e']).should.become(['1a','2b','3c','4d','5e']);
+        });
+        it('with three arrays',function(){
+            return promise.zipwith(function(a,b,c){
+                return a+b+c;
+            },[1,2,3,4,5],['a','b','c','d','e'].map(promise.resolve),[10,20,promise.resolve(30),40,50]).should.become(['1a10','2b20','3c30','4d40','5e50']);
+        });
+    });
+    describe('should work on uneven sized arrays',function(){
+        it('with two arrays one shorter',function(){
+            return promise.zipwith(function(a,b){
+                return a+b;
+            },[1,2,3,4,5].map(promise.resolve),['a','b','c','d']).should.become(['1a','2b','3c','4d']);
+        });
+        it('with three arrays all different sizes',function(){
+            return promise.zipwith(function(a,b,c){
+                return a+b+c;
+            },[1,2,3,4,5,6],['a','b','c'].map(promise.resolve),[10,20,promise.resolve(30),40,50]).should.become(['1a10','2b20','3c30']);
+        });
     });
 });

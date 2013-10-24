@@ -96,7 +96,7 @@ create a promise that is rejected with this value.
 promise.denodify(function)
 ```
 
-takes as an argument a function which has a callback as it's last argument, returns a function that acts identically except it returns a promice instead of taking a callback.
+takes as an argument a function which has a callback as it's last argument, returns a function that acts identically except it returns a promise instead of taking a callback.
 
 ###[fold left](https://github.com/calvinmetcalf/lie-lfold)
 
@@ -106,6 +106,26 @@ promise.lfold(array of things,function,accumulator)
 
 like Array.prototype.reduce, but the array may include promises or values and the function may return a promise or a value. `promise.lfold` always return a promise.
 
+###[fold right](https://github.com/calvinmetcalf/lie-rfold)
+
+```javascript
+promise.rfold(array of things,function,accumulator)
+```
+
+like Array.prototype.reduceRight, but the array may include promises or values and the function may return a promise or a value. `promise.rfold` always return a promise.
+
+in other words it's like [fold left](https://github.com/calvinmetcalf/lie-lfold) but starts at the right
+
+###[fold](https://github.com/calvinmetcalf/lie-fold)
+
+```javascript
+promise.fold(array of things,function,accumulator)
+```
+
+like Array.prototype.reduce, but the array may include promises or values and the function may return a promise or a value. `promise.fold` always return a promise.
+
+unlike [lfold](https://github.com/calvinmetcalf/lie-lfold) and [rfold](https://github.com/calvinmetcalf/lie-rfold) fold calls the values in the order the promises resolve.
+
 ###[apply](https://github.com/calvinmetcalf/lie-apply)
 
 ```javascript
@@ -113,6 +133,22 @@ promise.apply(function, one or more values or promises)
 ```
 
 calls the function with the values or promises once they all resolve, returns the result.
+
+###[zip](https://github.com/calvinmetcalf/lie-zip)
+
+```javascript
+promise.zip(array of things[,...])
+```
+
+promise.zips the 2 or more arrays up such that `zip([1,2],['a','b'])` returns `[[1,'a'],[2,'b']];`. When called with one array it is equivalent to [lie-map](https://github.com/calvinmetcalf/lie-map) called with the `function(a){return [a]}`.
+
+###[zipwith](https://github.com/calvinmetcalf/lie-zipwith)
+
+```javascript
+zipwith(function,array of things[,...])
+```
+
+zips the 2 or more arrays up with a function 'func' such that `zip(func(1,2),func('a','b'))` returns `[func(1,'a'),func(2,'b')];`. When called with one array it is equivalent to [lie-map](https://github.com/calvinmetcalf/lie-map) (with the arguments in reverse order).
 
 ## License
 
