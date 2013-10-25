@@ -1,6 +1,6 @@
 {
   "name": "liar",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "A modular collection of tools for asynchronous programing via promises ",
   "main": "lib/index.js",
   "scripts": {
@@ -48,6 +48,6 @@
     "lie-rfold": "~0.1.0",
     "lie-zip": "~0.1.0",
     "lie-zipwith": "~0.1.0",
-    "lie-filter": "~0.1.1"
+    "lie-filter": "~0.1.2"
   }
 }
