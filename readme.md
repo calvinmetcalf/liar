@@ -158,6 +158,14 @@ promise.filter(array, function)
 
 returns an array filtered based on the function, aka only truthy values are returned.
 
+###[every](https://github.com/calvinmetcalf/lie-every)
+
+```javascript
+promise.every(array, function)
+```
+
+applies the function the the array of promies or values (or mix) and returns true if they are all truthy.
+
 ## License
 
   MIT

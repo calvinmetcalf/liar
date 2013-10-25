@@ -1,7 +1,7 @@
 {
   "name": "liar",
-  "version": "0.2.3",
-  "description": "A modular collection of tools for asynchronous programing via promises ",
+  "version": "0.2.4",
+  "description": "A modular collection of tools for asynchronous programing via promises",
   "main": "lib/index.js",
   "scripts": {
     "test": "./node_modules/istanbul/lib/cli.js test ./node_modules/mocha/bin/_mocha test/test.js"
@@ -48,6 +48,7 @@
     "lie-rfold": "~0.1.0",
     "lie-zip": "~0.1.0",
     "lie-zipwith": "~0.1.0",
-    "lie-filter": "~0.1.2"
+    "lie-filter": "~0.1.2",
+    "lie-every": "~0.1.0"
   }
 }
