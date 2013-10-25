@@ -161,10 +161,24 @@ returns an array filtered based on the function, aka only truthy values are retu
 ###[every](https://github.com/calvinmetcalf/lie-every)
 
 ```javascript
-promise.every(array, function)
+promise.every(array[, function])
 ```
 
-applies the function the the array of promies or values (or mix) and returns true if they are all truthy.
+Applies the function the the array of promies or values (or mix) and returns true if they are all truthy.
+
+It is lazy and will resolve as soon as the first falsy value is encountered.
+
+If the function is omited then it tests the truthiness of the values.
+
+###[any](https://github.com/calvinmetcalf/lie-any)
+
+```javascript
+promise.any(array[, function])
+```
+
+Applies the function the the array of promies or values (or mix) and returns true if at least one value is truthy.
+
+It is lazy and will resolve as soon as one value returns true, if the function is omited then it tests the truthiness of the array.
 
 ## License
 

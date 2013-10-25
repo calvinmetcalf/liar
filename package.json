@@ -49,6 +49,7 @@
     "lie-zip": "~0.1.0",
     "lie-zipwith": "~0.1.0",
     "lie-filter": "~0.1.2",
-    "lie-every": "~0.1.0"
+    "lie-every": "~0.1.1",
+    "lie-any": "~0.1.0"
   }
 }

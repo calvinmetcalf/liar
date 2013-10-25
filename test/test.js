@@ -640,3 +640,122 @@ describe("filter", function() {
     return promise.filter([1,promise.resolve(2),promise.resolve(3),4],function(v){return false;}).should.become([]);
   });
 });
+describe("every", function() {
+    describe('basic', function() {
+        it("should become true", function() {
+            return promise.every([1, 2, 3, 4], function(v) {
+                return v < 5
+            }).should.become(true);
+        });
+        it("should become false 1", function() {
+            return promise.every([1, 2, 3, 4], function(v) {
+                return v > 1;
+            }).should.become(false);
+        });
+        it("should become false 2", function() {
+            return promise.every([1, 2, 3, 4], function(v) {
+                return v < 4;
+            }).should.become(false);
+        });
+    });
+    describe('async', function() {
+        it("should become true", function() {
+            return promise.every([promise.resolve(1), promise.resolve(2), 3, 4], function(v) {
+                return v < 5
+            }).should.become(true);
+        });
+        it("should become false 1", function() {
+            return promise.every([promise.resolve(1), promise.resolve(2), 3, 4], function(v) {
+                return v > 1;
+            }).should.become(false);
+        });
+        it("should become false 2", function() {
+            return promise.every([promise.resolve(1), promise.resolve(2), 3, 4], function(v) {
+                return v < 4;
+            }).should.become(false);
+        });
+    });
+    describe('no func', function() {
+        it('should work',function(){
+            return promise.every([promise.resolve(1), promise.resolve(2), 3, 4]).should.become(true); 
+        });
+        it('should fail 1',function(){
+            return promise.every([promise.resolve(1), promise.resolve(2), 0, 4]).should.become(false); 
+        });
+        it('should fail 2',function(){
+            return promise.every([promise.resolve(1), promise.resolve(0), 3, 4]).should.become(false); 
+        });
+    });
+    describe('lazy',function(){
+        it("should be lazy", function() {
+            return promise.every([promise(function(yes,no){
+                setTimeout(function(){
+                    no('nope');
+                },50);
+            }),promise(function(yes,no){
+                setTimeout(function(){
+                    yes(2);
+                },10);
+            }),3,5],function(v){return v%2;}).should.become(false);
+          });
+          it("should fail on a failure", function() {
+            return promise.every([promise(function(yes,no){
+                setTimeout(function(){
+                    no('nope');
+                },10);
+            }),promise(function(yes,no){
+                setTimeout(function(){
+                    yes(2);
+                },50);
+            }),3,5],function(v){return v%2;}).should.be.be.rejected.and.become('nope');
+          });
+    });
+});
+describe("any", function() {
+  it("should become true", function() {
+    return promise.any([1,2,3,4],function(v){return !(v%4);}).should.become(true);
+  });
+  it("should become false", function() {
+    return promise.any([1,2,3,4],function(v){return !(v%5);}).should.become(false);
+  });
+  it("should become true async", function() {
+    return promise.any([promise.resolve(1),promise.resolve(2),3,4],function(v){return !(v%4)}).should.become(true);
+  });
+  it("should become false async", function() {
+    return promise.any([promise.resolve(1),promise.resolve(2),3,4],function(v){return !(v%5);}).should.become(false);
+  });
+  it("should be lazy", function() {
+    return promise.any([promise(function(yes,no){
+        setTimeout(function(){
+            no('nope');
+        },50);
+    }),promise(function(yes,no){
+        setTimeout(function(){
+            yes(2);
+        },10);
+    }),3,4],function(v){return v===2;}).should.become(true);
+  });
+  it("should fail on a failure", function() {
+    return promise.any([promise(function(yes,no){
+        setTimeout(function(){
+            no('nope');
+        },10);
+    }),promise(function(yes,no){
+        setTimeout(function(){
+            yes(2);
+        },50);
+    }),3,4],function(v){return v===2;}).should.be.rejected.and.become('nope');
+  });
+  it('should work without a function',function(){
+      return promise.any([0,false,3,null]).should.become(true);
+  });
+  it('should still give a false without a function',function(){
+      return promise.any([0,false,null]).should.become(false);
+  });
+  it('should work without a function async',function(){
+      return promise.any([promise.resolve(0),promise.resolve(false),3,null]).should.become(true);
+  });
+  it('should still give a false without a function async',function(){
+      return promise.any([promise.resolve(0),promise.resolve(false),null]).should.become(false);
+  });
+});

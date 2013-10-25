@@ -17,8 +17,10 @@ promise.fold = require('lie-fold');
 promise.zip = require('lie-zip');
 promise.zipwith = require('lie-zipwith');
 promise.filter = require('lie-filter');
+promise.every = require('lie-every');
+promise.any = require('lie-any');
 module.exports = promise;
-},{"lie":33,"lie-all":3,"lie-apply":6,"lie-cast":8,"lie-denodify":9,"lie-filter":10,"lie-fold":11,"lie-lfold":13,"lie-map":15,"lie-race":17,"lie-reject":19,"lie-resolve":20,"lie-rfold":21,"lie-some":23,"lie-use":26,"lie-zip":27,"lie-zipwith":30}],2:[function(require,module,exports){
+},{"lie":36,"lie-all":3,"lie-any":6,"lie-apply":8,"lie-cast":10,"lie-denodify":11,"lie-every":12,"lie-filter":13,"lie-fold":14,"lie-lfold":16,"lie-map":18,"lie-race":20,"lie-reject":22,"lie-resolve":23,"lie-rfold":24,"lie-some":26,"lie-use":29,"lie-zip":30,"lie-zipwith":33}],2:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -102,7 +104,7 @@ function all(array) {
 }
 module.exports = all;
 
-},{"lie":33,"lie-cast":8,"lie-quickeach":4,"lie-quickmap":5}],4:[function(require,module,exports){
+},{"lie":36,"lie-cast":10,"lie-quickeach":4,"lie-quickmap":5}],4:[function(require,module,exports){
 function quickEach(arr,func){
     var len = arr.length;
     if(!len){
@@ -139,6 +141,34 @@ module.exports = quickMap;
 },{}],6:[function(require,module,exports){
 var qMap = require('lie-quickmap');
 var all = require('lie-all');
+var promise = require('lie');
+var cast = require('lie-cast');
+function any(array,func){
+    var hasfunc = typeof func === 'function';
+    return promise(function(yes,no){
+        all(qMap(array,function(value){
+            var cvalue = cast(value);
+            if(hasfunc){
+                cvalue = cvalue.then(func);
+            }
+            return cvalue.then(function(pValue){
+                if(pValue){
+                    yes(true);
+                }else{
+                    return false;
+                }
+            });
+        })).then(function(){
+            yes(false);
+        },no);
+    });
+}
+module.exports = any;
+},{"lie":36,"lie-all":3,"lie-cast":10,"lie-quickmap":7}],7:[function(require,module,exports){
+module.exports=require(5)
+},{}],8:[function(require,module,exports){
+var qMap = require('lie-quickmap');
+var all = require('lie-all');
 var cast = require('lie-cast');
 function apply(){
     var args = qMap(arguments);
@@ -153,9 +183,9 @@ function apply(){
     });
 }
 module.exports = apply;
-},{"lie-all":3,"lie-cast":8,"lie-quickmap":7}],7:[function(require,module,exports){
+},{"lie-all":3,"lie-cast":10,"lie-quickmap":9}],9:[function(require,module,exports){
 module.exports=require(5)
-},{}],8:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 var resolve = require('lie-resolve');
 function cast(thing){
     if(thing && typeof thing.then === 'function'){
@@ -165,7 +195,7 @@ function cast(thing){
     }
 }
 module.exports = cast;
-},{"lie-resolve":20}],9:[function(require,module,exports){
+},{"lie-resolve":23}],11:[function(require,module,exports){
 var promise = require('lie');
 function denodify(func) {
     return function() {
@@ -184,7 +214,35 @@ function denodify(func) {
     };
 }
 module.exports = denodify;
-},{"lie":33}],10:[function(require,module,exports){
+},{"lie":36}],12:[function(require,module,exports){
+var map = require('lie-map');
+var cast = require('lie-cast');
+function every(array,func){
+    var hasfunc = typeof func === 'function';
+    var code = Math.random().toString();
+    return map(array,function(value){
+        var cvalue = cast(value);
+        if(hasfunc){
+            cvalue = cvalue.then(func);
+        }
+        return cvalue.then(function(bool){
+            if(!bool){
+                throw code;
+            }
+            return;
+        });
+    }).then(function(){
+        return true;
+    },function(reason){
+        if(reason===code){
+            return false;
+        }else{
+            throw reason;
+        }
+    });
+}
+module.exports = every;
+},{"lie-cast":10,"lie-map":18}],13:[function(require,module,exports){
 var map = require('lie-map');
 var zipwith = require('lie-zipwith');
 function filter(array,func){
@@ -203,7 +261,7 @@ function filter(array,func){
     });
 }
 module.exports = filter;
-},{"lie-map":15,"lie-zipwith":30}],11:[function(require,module,exports){
+},{"lie-map":18,"lie-zipwith":33}],14:[function(require,module,exports){
 var some = require('lie-some');
 var apply = require('lie-apply');
 var each = require('lie-quickeach');
@@ -221,9 +279,9 @@ function fold(array,func,acc){
         });
 }
 module.exports = fold;
-},{"lie-apply":6,"lie-quickeach":12,"lie-some":23}],12:[function(require,module,exports){
+},{"lie-apply":8,"lie-quickeach":15,"lie-some":26}],15:[function(require,module,exports){
 module.exports=require(4)
-},{}],13:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 var apply = require('lie-apply');
 var each = require('lie-quickeach');
 function lfold(array,func,acc){
@@ -238,9 +296,9 @@ function lfold(array,func,acc){
         return accum;
 }
 module.exports = lfold;
-},{"lie-apply":6,"lie-quickeach":14}],14:[function(require,module,exports){
+},{"lie-apply":8,"lie-quickeach":17}],17:[function(require,module,exports){
 module.exports=require(4)
-},{}],15:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 var use = require('lie-use');
 var all = require('lie-all');
 var qMap = require('lie-quickmap');
@@ -256,9 +314,9 @@ function map(array, func) {
 }
 module.exports = map;
 
-},{"lie-all":3,"lie-cast":8,"lie-quickmap":16,"lie-use":26}],16:[function(require,module,exports){
+},{"lie-all":3,"lie-cast":10,"lie-quickmap":19,"lie-use":29}],19:[function(require,module,exports){
 module.exports=require(5)
-},{}],17:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 var promise = require('lie');
 var each = require('lie-quickeach');
 function race(array) {
@@ -270,9 +328,9 @@ function race(array) {
 }
 module.exports = race;
 
-},{"lie":33,"lie-quickeach":18}],18:[function(require,module,exports){
+},{"lie":36,"lie-quickeach":21}],21:[function(require,module,exports){
 module.exports=require(4)
-},{}],19:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 var promise = require('lie');
 function reject(value){
     return promise(function(yes,no){
@@ -280,7 +338,7 @@ function reject(value){
     });
 }
 module.exports = reject;
-},{"lie":33}],20:[function(require,module,exports){
+},{"lie":36}],23:[function(require,module,exports){
 var promise = require('lie');
 function resolve(value){
     return promise(function(yes){
@@ -288,7 +346,7 @@ function resolve(value){
     });
 }
 module.exports = resolve;
-},{"lie":33}],21:[function(require,module,exports){
+},{"lie":36}],24:[function(require,module,exports){
 var apply = require('lie-apply');
 var each = require('lie-quickeach');
 function rfold(array,func,acc){
@@ -305,9 +363,9 @@ function rfold(array,func,acc){
         return accum;
 }
 module.exports = rfold;
-},{"lie-apply":6,"lie-quickeach":22}],22:[function(require,module,exports){
+},{"lie-apply":8,"lie-quickeach":25}],25:[function(require,module,exports){
 module.exports=require(4)
-},{}],23:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 var promise = require('lie');
 var cast = require('lie-cast');
 var qMap = require('lie-quickmap');
@@ -338,11 +396,11 @@ function some(array) {
 }
 module.exports = some;
 
-},{"lie":33,"lie-cast":8,"lie-quickeach":24,"lie-quickmap":25}],24:[function(require,module,exports){
+},{"lie":36,"lie-cast":10,"lie-quickeach":27,"lie-quickmap":28}],27:[function(require,module,exports){
 module.exports=require(4)
-},{}],25:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 module.exports=require(5)
-},{}],26:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 function use(thing,func){
     if(typeof thing.then === 'function'){
         return thing.then(func);
@@ -351,7 +409,7 @@ function use(thing,func){
     }
 }
 module.exports = use;
-},{}],27:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 var map = require('lie-map');
 var qMap = require('lie-quickmap');
 var each = require('lie-quickeach');
@@ -378,11 +436,11 @@ function zip(){
         });
 }
 module.exports = zip;
-},{"lie-map":15,"lie-quickeach":28,"lie-quickmap":29}],28:[function(require,module,exports){
+},{"lie-map":18,"lie-quickeach":31,"lie-quickmap":32}],31:[function(require,module,exports){
 module.exports=require(4)
-},{}],29:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 module.exports=require(5)
-},{}],30:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 var map = require('lie-map');
 var qMap = require('lie-quickmap');
 var each = require('lie-quickeach');
@@ -410,11 +468,11 @@ function zipwith(){
         });
 }
 module.exports = zipwith;
-},{"lie-map":15,"lie-quickeach":31,"lie-quickmap":32}],31:[function(require,module,exports){
+},{"lie-map":18,"lie-quickeach":34,"lie-quickmap":35}],34:[function(require,module,exports){
 module.exports=require(4)
-},{}],32:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 module.exports=require(5)
-},{}],33:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 var immediate = require('immediate');
 // Creates a deferred: an object with a promise and corresponding resolve/reject methods
 function Promise(resolver) {
@@ -529,9 +587,9 @@ function execute(callback, value, resolve, reject) {
 }
 module.exports = Promise;
 
-},{"immediate":35}],34:[function(require,module,exports){
+},{"immediate":38}],37:[function(require,module,exports){
 var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {};module.exports = typeof global === "object" && global ? global : this;
-},{}],35:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 "use strict";
 var types = [
     require("./nextTick"),
@@ -582,7 +640,7 @@ retFunc.clear = function (n) {
 };
 module.exports = retFunc;
 
-},{"./messageChannel":36,"./mutation":37,"./nextTick":38,"./postMessage":39,"./realSetImmediate":40,"./stateChange":41,"./timeout":42}],36:[function(require,module,exports){
+},{"./messageChannel":39,"./mutation":40,"./nextTick":41,"./postMessage":42,"./realSetImmediate":43,"./stateChange":44,"./timeout":45}],39:[function(require,module,exports){
 "use strict";
 var globe = require("./global");
 exports.test = function () {
@@ -596,7 +654,7 @@ exports.install = function (func) {
         channel.port2.postMessage(0);
     };
 };
-},{"./global":34}],37:[function(require,module,exports){
+},{"./global":37}],40:[function(require,module,exports){
 "use strict";
 //based off rsvp
 //https://github.com/tildeio/rsvp.js/blob/master/lib/rsvp/async.js
@@ -622,7 +680,7 @@ exports.install = function (handle) {
         element.setAttribute("drainQueue", "drainQueue");
     };
 };
-},{"./global":34}],38:[function(require,module,exports){
+},{"./global":37}],41:[function(require,module,exports){
 var process=require("__browserify_process");"use strict";
 exports.test = function () {
     // Don't get fooled by e.g. browserify environments.
@@ -632,7 +690,7 @@ exports.test = function () {
 exports.install = function () {
     return process.nextTick;
 };
-},{"__browserify_process":2}],39:[function(require,module,exports){
+},{"__browserify_process":2}],42:[function(require,module,exports){
 "use strict";
 var globe = require("./global");
 exports.test = function () {
@@ -670,7 +728,7 @@ exports.install = function (func) {
         globe.postMessage(codeWord, "*");
     };
 };
-},{"./global":34}],40:[function(require,module,exports){
+},{"./global":37}],43:[function(require,module,exports){
 "use strict";
 var globe = require("./global");
 exports.test = function () {
@@ -682,7 +740,7 @@ exports.install = function (handle) {
     return globe.setTimeout.bind(globe,handle,0);
 };
 
-},{"./global":34}],41:[function(require,module,exports){
+},{"./global":37}],44:[function(require,module,exports){
 "use strict";
 var globe = require("./global");
 exports.test = function () {
@@ -707,7 +765,7 @@ exports.install = function (handle) {
         return handle;
     };
 };
-},{"./global":34}],42:[function(require,module,exports){
+},{"./global":37}],45:[function(require,module,exports){
 "use strict";
 exports.test = function () {
     return true;
