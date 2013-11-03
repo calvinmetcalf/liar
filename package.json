@@ -1,6 +1,6 @@
 {
   "name": "liar",
-  "version": "0.2.4",
+  "version": "0.3.0",
   "description": "A modular collection of tools for asynchronous programing via promises",
   "main": "lib/index.js",
   "scripts": {
