@@ -26,16 +26,21 @@ describe("Use with Chai as Promised in the other style", function() {
   it(".should.be.fulfilled", function() {
     return promise(function(yes){
         yes();
-    }).should.be.fulfilled;
+    }).then().should.be.fulfilled;
   });
   it(".should.be.rejected", function() {
     return promise(function(yes,no){
         no();
-    }).should.be.rejected;
+    }).then().should.be.rejected;
   });
   it(".should.be.rejected.with(TypeError, 'boo')", function() {
     return promise(function(yes,no){
         no(new TypeError("boo!"));
+    }).should.be.rejectedWith(TypeError, "boo");
+  });
+  it(".should.be.rejected.with(TypeError, 'boo')", function() {
+    return promise(function(yes,no){
+       throw new TypeError("boo!");
     }).should.be.rejectedWith(TypeError, "boo");
   });
   it(".should.be.rejected.with(TypeError, 'boo') in a then", function() {
@@ -49,6 +54,13 @@ describe("Use with Chai as Promised in the other style", function() {
      return promise(function(yes){
         yes(5);
     }).should.become(5);
+  });
+   it(".should.become(5) after a timeout", function() {
+     return promise(function(yes){
+        setTimeout(function(){
+            yes(5);
+       },100)
+    }).then().should.become(5);
   });
   return it(".should.eventually.be.above(2)", function() {
     return promise(function(yes){
