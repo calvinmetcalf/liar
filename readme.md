@@ -180,6 +180,15 @@ Applies the function the the array of promies or values (or mix) and returns tru
 
 It is lazy and will resolve as soon as one value returns true, if the function is omited then it tests the truthiness of the array.
 
+###[cast](https://github.com/calvinmetcalf/lie-iter)
+
+```javascript
+promise.iter(array of values or promises (or promise for such)[, function])
+```
+
+call the function on each value waiting for it to resolve before calling the next one.  Returns an array of the values produced or the first error.  If function is omitted it just resolves the promises sequentially (aka default function is `function(a){return a}`)
+
+
 ## License
 
   MIT
