@@ -164,11 +164,11 @@ returns an array filtered based on the function, aka only truthy values are retu
 promise.every(array (or promise for an array)[, function])
 ```
 
-Applies the function the the array of promies or values (or mix) and returns true if they are all truthy.
+Applies the function the the array of promise or values (or mix) and returns true if they are all truthy.
 
 It is lazy and will resolve as soon as the first falsy value is encountered.
 
-If the function is omited then it tests the truthiness of the values.
+If the function is omitted then it tests the truthiness of the values.
 
 ###[any](https://github.com/calvinmetcalf/lie-any)
 
@@ -176,11 +176,11 @@ If the function is omited then it tests the truthiness of the values.
 promise.any(array (or promise for an array)[, function])
 ```
 
-Applies the function the the array of promies or values (or mix) and returns true if at least one value is truthy.
+Applies the function the the array of promise or values (or mix) and returns true if at least one value is truthy.
 
-It is lazy and will resolve as soon as one value returns true, if the function is omited then it tests the truthiness of the array.
+It is lazy and will resolve as soon as one value returns true, if the function is omitted then it tests the truthiness of the array.
 
-###[cast](https://github.com/calvinmetcalf/lie-iter)
+###[iter](https://github.com/calvinmetcalf/lie-iter)
 
 ```javascript
 promise.iter(array of values or promises (or promise for such)[, function])
@@ -188,6 +188,13 @@ promise.iter(array of values or promises (or promise for such)[, function])
 
 call the function on each value waiting for it to resolve before calling the next one.  Returns an array of the values produced or the first error.  If function is omitted it just resolves the promises sequentially (aka default function is `function(a){return a}`)
 
+###[parallel](https://github.com/calvinmetcalf/lie-parallel)
+
+```javascript
+promise.parallel(array of values or promises (or promise for such)[, number, function])
+```
+
+A cross between lie-iter and lie-map, resolves the promises in parallel but only n of them at a time. Omitting the number is equivalent to map and setting it to 1 is the equivalent of lie-iter. Returns an array of the values produced or the first error.  If function is omitted it just resolves the promises sequentially (aka default function is `function(a){return a}`)
 
 ## License
 
